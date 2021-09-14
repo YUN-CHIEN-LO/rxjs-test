@@ -1,6 +1,10 @@
 import { fromEvent } from 'rxjs';
-import { scan } from 'rxjs/operators';
+import { throttleTime, map, scan } from 'rxjs/operators';
 
 fromEvent(document, 'click')
-  .pipe(scan(count => count + 1, 0))
-  .subscribe(count => console.log(`Clicked ${count} times`));
+  .pipe(
+    throttleTime(1000),
+    map((event: MouseEvent) => event.clientX),
+    scan((count, clientX) => count + clientX, 0)
+  )
+  .subscribe(count => console.log(count));
