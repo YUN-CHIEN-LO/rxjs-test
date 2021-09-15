@@ -6,13 +6,13 @@
     <title>RxJS Demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: 'Arial'; background: lightgray}
-        ul { list-style-type: none; padding: 20px; }
-        li { padding: 15px; background: lightcoral; margin-bottom: 10px; }
+        html, body { font-family: 'Arial'; background: lightgray; position: relative; width: 100vw; height: 100vh;}
+        #drag { padding: 15px; background: lightcoral; width: 100px; position: absolute;display: inline-block; transform: translate(-50%, -50%);}
     </style>
 </head>
 <body>
     <h1>RxJS Demo</h1>
+    <div id="drag">DRAG</div>
     <script src="/bundle.js"></script>
 </body>
 </html>
