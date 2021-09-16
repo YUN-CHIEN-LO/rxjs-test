@@ -1,36 +1,46 @@
 import { fromEvent } from "rxjs";
-import { map, takeUntil, concatAll } from "rxjs/operators";
+import { map, filter, takeUntil, concatAll, withLatestFrom } from "rxjs/operators";
 
-const dragDOM = document.getElementById("drag");
-const body = document.body;
+const video = document.getElementById("video");
+const anchor = document.getElementById("anchor");
 
-let mouseDown = fromEvent(dragDOM, "mousedown");
-let mouseUp = fromEvent(dragDOM, "mouseup");
-let mouseMove = fromEvent(body, "mousemove");
+const scroll = fromEvent(document, "scroll");
+const mouseDown = fromEvent(video, "mousedown");
+const mouserUp = fromEvent(document, "mouseup");
+const mouseMove = fromEvent(document, "mousemove");
 
-const source = mouseDown.pipe(
-  map((event: any) => mouseMove.pipe(takeUntil(mouseUp))),
-  concatAll(),
-  map((event: any) => {
-    return {
-      x: event.clientX,
-      y: event.clientY,
-    };
-  })
-);
-source.subscribe((pos) => {
-  dragDOM.style.left = pos.x + "px";
-  dragDOM.style.top = pos.y + "px";
-});
+const validValue = (value:number, max:number, min:number):number => {
+  return Math.min(Math.max(value, min), max)
+}
 
-let subscriber = {
-  next: (val: any) => {
+scroll.pipe(map((e) => anchor.getBoundingClientRect().bottom < 0)).subscribe({
+  next: (val) => {
     console.log(val);
+    if (val) {
+      video.classList.add("video-fixed");
+    } else {
+      video.classList.remove("video-fixed");
+    }
   },
   complete: () => {
     console.log("complete");
   },
-  error: (error: any) => {
+  error: (error) => {
     console.log(error);
   },
-};
+});
+
+mouseDown.pipe(
+  filter((e) => video.classList.contains("video-fixed")),
+  map((e) => mouseMove.pipe(takeUntil(mouserUp))),
+  concatAll(),
+  withLatestFrom(mouseDown, (move:any, down:any)=>{
+    return {
+      x: validValue(move.clientX - down.offsetX, window.innerWidth - video.getBoundingClientRect().width, 0),
+      y: validValue(move.clientY - down.offsetY, window.innerHeight - video.getBoundingClientRect().height, 0)
+    }
+  })
+).subscribe(pos => {
+  video.style.top = pos.y + 'px';
+  video.style.left = pos.x + 'px';
+});
