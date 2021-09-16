@@ -1,46 +1,32 @@
-import { fromEvent } from "rxjs";
-import { map, filter, takeUntil, concatAll, withLatestFrom } from "rxjs/operators";
+import { fromEvent, EMPTY } from "rxjs";
+import { mapTo, startWith, merge, scan } from "rxjs/operators";
 
-const video = document.getElementById("video");
-const anchor = document.getElementById("anchor");
+const plusBtn = document.getElementById("plus");
+const minusBtn = document.getElementById("minus");
+const number = document.getElementById("number");
 
-const scroll = fromEvent(document, "scroll");
-const mouseDown = fromEvent(video, "mousedown");
-const mouserUp = fromEvent(document, "mouseup");
-const mouseMove = fromEvent(document, "mousemove");
+const plusClick = fromEvent(plusBtn, "click").pipe(mapTo(1));
+const minusClick = fromEvent(minusBtn, "click").pipe(mapTo(-1));
 
-const validValue = (value:number, max:number, min:number):number => {
-  return Math.min(Math.max(value, min), max)
-}
 
-scroll.pipe(map((e) => anchor.getBoundingClientRect().bottom < 0)).subscribe({
-  next: (val) => {
-    console.log(val);
-    if (val) {
-      video.classList.add("video-fixed");
-    } else {
-      video.classList.remove("video-fixed");
-    }
-  },
-  complete: () => {
-    console.log("complete");
-  },
-  error: (error) => {
-    console.log(error);
-  },
-});
-
-mouseDown.pipe(
-  filter((e) => video.classList.contains("video-fixed")),
-  map((e) => mouseMove.pipe(takeUntil(mouserUp))),
-  concatAll(),
-  withLatestFrom(mouseDown, (move:any, down:any)=>{
-    return {
-      x: validValue(move.clientX - down.offsetX, window.innerWidth - video.getBoundingClientRect().width, 0),
-      y: validValue(move.clientY - down.offsetY, window.innerHeight - video.getBoundingClientRect().height, 0)
-    }
-  })
-).subscribe(pos => {
-  video.style.top = pos.y + 'px';
-  video.style.left = pos.x + 'px';
-});
+const numberstate = EMPTY;
+numberstate
+  .pipe(
+    startWith(0),
+    merge(plusClick, minusClick),
+    scan((origin: number, next: number) => {
+      return origin + next;
+    }, 0)
+  )
+  .subscribe({
+    next: (val) => {
+      console.log(val);
+      number.innerText = val.toString();
+    },
+    error: (error) => {
+      console.log(error);
+    },
+    complete: () => {
+      console.log("complete");
+    },
+  });
