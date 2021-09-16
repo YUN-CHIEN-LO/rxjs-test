@@ -1,19 +1,20 @@
 import { fromEvent } from "rxjs";
-import { bufferTime, filter } from "rxjs/operators";
-
-const btn = document.getElementById("btn");
-const click = fromEvent(btn, 'click').pipe(
-  bufferTime(500),
-  filter(arr=>arr.length >= 2)
+import { delay, map } from "rxjs/operators";
+const imgList = document.getElementsByTagName("img");
+const movePos = fromEvent(document, "mousemove").pipe(
+  map((e: any) => ({ x: e.clientX, y: e.clientY }))
 );
-click.subscribe({
-  next: (value) => {
-    console.log('success');
-  },
-  error: (err) => {
-    console.log("Error: " + err);
-  },
-  complete: () => {
-    console.log("complete");
-  },
-});
+
+function followMouse(DOMarr: any[]):void{
+  const delayTime = 600;
+  DOMarr.forEach((element:any, index:number) => {
+    movePos.pipe(
+      delay(delayTime*(Math.pow(0.65, index) + Math.cos(index/4))/2)
+    ).subscribe(pos=>{
+      element.style.transform = 'translate3d(' + pos.x + 'px, ' + pos.y + 'px, 0)';
+    });
+  });
+}
+
+followMouse(Array.from(imgList))
+
